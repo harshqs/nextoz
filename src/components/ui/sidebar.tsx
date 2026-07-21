@@ -58,8 +58,8 @@ export function Sidebar({ sessions, activeId, onNewChat, onLoad, onDelete, isOpe
       <button
         onClick={onToggle}
         className="fixed top-4 left-4 z-50 flex h-9 w-9 items-center justify-center rounded-full
-          bg-background dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a]
-          text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#252525] transition-colors"
+          bg-background border border-border
+          text-foreground hover:bg-accent transition-colors"
         aria-label="Toggle sidebar"
       >
         <MenuIcon />
@@ -75,17 +75,17 @@ export function Sidebar({ sessions, activeId, onNewChat, onLoad, onDelete, isOpe
 
       {/* Sidebar panel */}
       <aside className={`fixed top-0 left-0 z-40 h-full w-64 flex flex-col
-        bg-[#0f0f0f] dark:bg-[#0f0f0f] border-r border-[#1e1e1e]
+        bg-[#0f0f0f] dark:bg-[#0f0f0f] light:bg-white border-r border-border
         transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#1e1e1e]">
-          <span className="text-sm font-semibold text-white tracking-wide">NextOz</span>
+        <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border">
+          <span className="text-sm font-semibold text-foreground tracking-wide">NextOz</span>
           <button
             onClick={onNewChat}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
-              bg-white/10 hover:bg-white/20 text-white transition-colors"
+              bg-muted hover:bg-accent text-foreground transition-colors border border-border"
           >
             <PlusIcon /> New Chat
           </button>
@@ -94,14 +94,14 @@ export function Sidebar({ sessions, activeId, onNewChat, onLoad, onDelete, isOpe
         {/* Sessions list */}
         <div className="flex-1 overflow-y-auto py-2 custom-scrollbar">
           {sessions.length === 0 && (
-            <p className="text-center text-xs text-gray-600 mt-8 px-4">
+            <p className="text-center text-xs text-muted-foreground mt-8 px-4">
               No chats yet. Upload a document and start asking!
             </p>
           )}
 
           {today.length > 0 && (
             <div className="px-3 py-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-600 mb-1">Today</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Today</p>
               {today.map(s => (
                 <SessionItem key={s.id} session={s} isActive={s.id === activeId} onLoad={onLoad} onDelete={onDelete} />
               ))}
@@ -110,7 +110,7 @@ export function Sidebar({ sessions, activeId, onNewChat, onLoad, onDelete, isOpe
 
           {older.length > 0 && (
             <div className="px-3 py-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-600 mb-1">Earlier</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Earlier</p>
               {older.map(s => (
                 <SessionItem key={s.id} session={s} isActive={s.id === activeId} onLoad={onLoad} onDelete={onDelete} />
               ))}
@@ -119,8 +119,8 @@ export function Sidebar({ sessions, activeId, onNewChat, onLoad, onDelete, isOpe
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-[#1e1e1e]">
-          <p className="text-[10px] text-gray-600 text-center">Stored locally in your browser</p>
+        <div className="px-4 py-3 border-t border-border">
+          <p className="text-[10px] text-muted-foreground text-center">Stored locally in your browser</p>
         </div>
       </aside>
     </>
@@ -139,8 +139,8 @@ function SessionItem({ session, isActive, onLoad, onDelete }: {
     <div
       className={`group flex items-center gap-2 w-full rounded-lg px-2 py-2 mb-0.5 cursor-pointer transition-colors
         ${isActive
-          ? "bg-white/10 text-white"
-          : "text-gray-400 hover:bg-white/5 hover:text-white"}`}
+          ? "bg-accent text-foreground"
+          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"}`}
       onClick={() => onLoad(session.id)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -148,12 +148,12 @@ function SessionItem({ session, isActive, onLoad, onDelete }: {
       <ChatIcon />
       <div className="flex-1 min-w-0">
         <p className="text-xs truncate leading-snug">{session.title}</p>
-        <p className="text-[10px] text-gray-600 mt-0.5">{timeAgo(session.updatedAt)}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">{timeAgo(session.updatedAt)}</p>
       </div>
       {hovered && (
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(session.id); }}
-          className="shrink-0 text-gray-600 hover:text-red-400 transition-colors p-0.5 rounded"
+          className="shrink-0 text-muted-foreground hover:text-red-400 transition-colors p-0.5 rounded"
           aria-label="Delete chat"
         >
           <TrashIcon />

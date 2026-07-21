@@ -101,7 +101,7 @@ export function PromptBoxDemo() {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#0a0a0a]">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* Sidebar */}
       <Sidebar
         sessions={sessions}
@@ -117,16 +117,18 @@ export function PromptBoxDemo() {
       <div className="flex flex-1 flex-col min-w-0 h-full">
 
         {/* Top bar */}
-        <header className="flex items-center justify-between px-4 py-3 border-b border-[#1a1a1a] shrink-0">
-          <div className="w-9" /> {/* spacer for hamburger */}
-          {hasMessages && lastMode && (
-            <span className={`text-xs font-medium px-3 py-1 rounded-full border ${modeInfo[lastMode].bg} ${modeInfo[lastMode].color}`}>
-              {modeInfo[lastMode].label}
-            </span>
-          )}
-          {!hasMessages && (
-            <span className="text-sm font-semibold text-white/60 tracking-wide">NextOz</span>
-          )}
+        <header className="flex items-center px-4 py-3 border-b border-border shrink-0 gap-3">
+          {/* Spacer matching hamburger width — prevents title overlap */}
+          <div className="w-9 shrink-0" />
+          <div className="flex-1 flex justify-center">
+            {hasMessages && lastMode ? (
+              <span className={`text-xs font-medium px-3 py-1 rounded-full border ${modeInfo[lastMode].bg} ${modeInfo[lastMode].color}`}>
+                {modeInfo[lastMode].label}
+              </span>
+            ) : (
+              <span className="text-sm font-semibold text-foreground/60 tracking-wide">NextOz</span>
+            )}
+          </div>
           <ThemeToggle />
         </header>
 
@@ -136,16 +138,16 @@ export function PromptBoxDemo() {
             /* ── Hero ── */
             <div className="flex flex-col items-center justify-center min-h-full px-4 gap-6">
               <div className="text-center space-y-3">
-                <h1 className="text-5xl font-bold text-white tracking-tight">
+                <h1 className="text-5xl font-bold text-foreground tracking-tight">
                   Welcome to{" "}
                   <span className="inline-block cursor-default select-none transition-all duration-300
-                    text-white hover:text-transparent hover:bg-clip-text
+                    text-foreground hover:text-transparent hover:bg-clip-text
                     hover:bg-gradient-to-r hover:from-blue-400 hover:via-violet-400 hover:to-blue-400
                     hover:scale-105 hover:drop-shadow-[0_0_24px_rgba(139,92,246,0.6)]">
                     NextOz
                   </span>
                 </h1>
-                <p className="text-gray-500 text-sm max-w-sm">
+                <p className="text-muted-foreground text-sm max-w-sm">
                   Upload a PDF or TXT, pick a document mode, and ask anything.
                 </p>
               </div>
@@ -158,11 +160,11 @@ export function PromptBoxDemo() {
                   { icon: "📁", label: "General Doc", desc: "Adaptive tone" },
                 ].map(card => (
                   <div key={card.label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl
-                    bg-[#111] border border-[#1e1e1e] text-sm text-gray-400 hover:border-[#333] transition-colors">
+                    bg-muted/50 border border-border text-sm text-muted-foreground hover:border-border/80 transition-colors">
                     <span className="text-base">{card.icon}</span>
                     <div>
-                      <p className="text-xs font-medium text-gray-300">{card.label}</p>
-                      <p className="text-[10px] text-gray-600">{card.desc}</p>
+                      <p className="text-xs font-medium text-foreground">{card.label}</p>
+                      <p className="text-[10px] text-muted-foreground">{card.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -180,7 +182,7 @@ export function PromptBoxDemo() {
                 <div className="flex gap-3 items-start">
                   <Avatar type="assistant" />
                   <div className="flex-1 min-w-0">
-                    <div className="rounded-2xl rounded-tl-sm px-5 py-4 bg-[#111] border border-[#1e1e1e]">
+                    <div className="rounded-2xl rounded-tl-sm px-5 py-4 bg-muted dark:bg-[#111] border border-border">
                       <MessageRenderer content={streamingContent} isStreaming={isLoading} />
                     </div>
                   </div>
@@ -191,10 +193,10 @@ export function PromptBoxDemo() {
               {isLoading && streamingContent === "" && (
                 <div className="flex gap-3 items-start">
                   <Avatar type="assistant" />
-                  <div className="rounded-2xl rounded-tl-sm px-5 py-4 bg-[#111] border border-[#1e1e1e]">
+                  <div className="rounded-2xl rounded-tl-sm px-5 py-4 bg-muted dark:bg-[#111] border border-border">
                     <div className="flex gap-1.5 items-center py-1">
                       {[0,1,2].map(j => (
-                        <span key={j} className="h-2 w-2 rounded-full bg-gray-500 animate-bounce"
+                        <span key={j} className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce"
                           style={{ animationDelay: `${j * 0.15}s` }} />
                       ))}
                     </div>
@@ -214,14 +216,14 @@ export function PromptBoxDemo() {
         </div>
 
         {/* Input */}
-        <div className="shrink-0 px-4 pb-4 pt-2 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent">
+        <div className="shrink-0 px-4 pb-4 pt-2 bg-gradient-to-t from-background via-background/95 to-transparent">
           <div className="max-w-3xl mx-auto">
             <PromptBox
               messages={messages}
               onSend={handleSend}
               isLoading={isLoading}
             />
-            <p className="text-center text-[11px] text-gray-700 mt-2">
+            <p className="text-center text-[11px] text-muted-foreground/50 mt-2">
               NextOz · Powered by Groq · Responses may be inaccurate
             </p>
           </div>
@@ -242,8 +244,8 @@ function Avatar({ type }: { type: "user" | "assistant" }) {
     );
   }
   return (
-    <div className="h-8 w-8 rounded-full bg-[#1e1e1e] border border-[#2a2a2a]
-      flex items-center justify-center shrink-0 text-gray-400 text-xs font-bold mt-0.5">
+    <div className="h-8 w-8 rounded-full bg-muted border border-border
+      flex items-center justify-center shrink-0 text-muted-foreground text-xs font-bold mt-0.5">
       U
     </div>
   );
@@ -257,15 +259,15 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
       <div className={`max-w-[78%] min-w-0 ${isUser ? "items-end flex flex-col" : ""}`}>
         {isUser ? (
           <div className="rounded-2xl rounded-tr-sm px-4 py-3
-            bg-white text-black dark:bg-white dark:text-black text-sm leading-relaxed font-medium shadow-sm">
+            bg-foreground text-background text-sm leading-relaxed font-medium shadow-sm">
             {msg.content}
           </div>
         ) : (
-          <div className="rounded-2xl rounded-tl-sm px-5 py-4 bg-[#111] border border-[#1e1e1e] shadow-sm">
+          <div className="rounded-2xl rounded-tl-sm px-5 py-4 bg-muted dark:bg-[#111] border border-border shadow-sm">
             <MessageRenderer content={msg.content} />
           </div>
         )}
-        <span className="text-[10px] text-gray-700 mt-1 px-1">
+        <span className="text-[10px] text-muted-foreground/50 mt-1 px-1">
           {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
