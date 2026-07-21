@@ -1,8 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as pdfParseModule from "pdf-parse";
-// pdf-parse exports differently depending on module resolution
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const pdfParse: (buf: Buffer) => Promise<{ text: string }> = (pdfParseModule as any).default ?? pdfParseModule;
+
+async function extractTextFromPdf(buffer: ArrayBuffer): Promise<string> {
+  // Dynamically import pdfjs-dist to avoid Next.js build issues
+  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+
+  // Disable worker for server-side use
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+
+  const loadingTask = pdfjsLib.getDocument({
+    data: new Uint8Array(buffer),
+    useWorkerFetch: false,
+    useSystemFonts: true,
+  });
+
+  const pdf = await loadingTask.promise;
+  const totalPages = pdf.numPages;
+  const textParts: string[] = [];
+
+  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((item: any) => item.str ?? "")
+      .join(" ");
+    textParts.push(pageText);
+  }
+
+  return textParts.join("\n").trim();
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,12 +39,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const allowedTypes = [
-      "application/pdf",
-      "text/plain",
-    ];
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    const isTxt = file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt");
 
-    if (!allowedTypes.includes(file.type) && !file.name.endsWith(".txt")) {
+    if (!isPdf && !isTxt) {
       return NextResponse.json(
         { error: "Only PDF and TXT files are supported" },
         { status: 415 }
@@ -26,21 +50,17 @@ export async function POST(req: NextRequest) {
     }
 
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
     let text = "";
 
-    if (file.type === "application/pdf") {
-      const parsed = await pdfParse(buffer);
-      text = parsed.text;
+    if (isPdf) {
+      text = await extractTextFromPdf(arrayBuffer);
     } else {
-      // Plain text file
-      text = buffer.toString("utf-8");
+      text = new TextDecoder("utf-8").decode(arrayBuffer);
     }
 
     if (!text.trim()) {
       return NextResponse.json(
-        { error: "Could not extract text from this file. It may be a scanned image-based PDF." },
+        { error: "Could not extract text. This may be a scanned/image-based PDF — try a text-based PDF." },
         { status: 422 }
       );
     }
@@ -48,9 +68,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ text: text.trim(), name: file.name });
   } catch (err) {
     console.error("PDF extract error:", err);
-    return NextResponse.json(
-      { error: "Failed to parse file." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to parse file." }, { status: 500 });
   }
 }
