@@ -160,6 +160,7 @@ export const PromptBox = React.forwardRef<
   const [uploadedDoc, setUploadedDoc] = React.useState<UploadedDoc | null>(null);
   const [isExtracting, setIsExtracting] = React.useState(false);
   const [extractError, setExtractError] = React.useState<string | null>(null);
+  const [extractProgress, setExtractProgress] = React.useState<{ page: number; total: number } | null>(null);
 
   React.useImperativeHandle(ref, () => internalRef.current!, []);
 
@@ -174,19 +175,59 @@ export const PromptBox = React.forwardRef<
     if (!file) return;
     setIsExtracting(true);
     setExtractError(null);
+    setExtractProgress(null);
     try {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/extract-pdf", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to extract");
-      setUploadedDoc({ name: data.name, text: data.text });
-      // Auto-select General Doc if no tool chosen
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Upload failed" }));
+        throw new Error(err.error ?? "Upload failed");
+      }
+
+      // Read SSE stream
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (!json) continue;
+          try {
+            const evt = JSON.parse(json);
+            if (evt.error) throw new Error(evt.error);
+            if (!evt.done && evt.total) {
+              setExtractProgress({ page: evt.page, total: evt.total });
+            }
+            if (evt.done && evt.text) {
+              finalText = evt.text;
+            }
+          } catch (parseErr) {
+            if (parseErr instanceof Error && parseErr.message !== "Unexpected end of JSON input") {
+              throw parseErr;
+            }
+          }
+        }
+      }
+
+      if (!finalText) throw new Error("No text extracted from document.");
+      setUploadedDoc({ name: file.name, text: finalText });
       if (!selectedTool) setSelectedTool("generalDoc");
     } catch (err: unknown) {
       setExtractError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsExtracting(false);
+      setExtractProgress(null);
     }
   };
 
@@ -210,8 +251,35 @@ export const PromptBox = React.forwardRef<
     <div className={cn("flex flex-col rounded-[28px] p-2 shadow-sm transition-colors bg-white border dark:bg-[#1a1a1a] dark:border-[#2a2a2a]", className)}>
       <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.txt,application/pdf,text/plain" />
 
+      {/* Uploading progress bar */}
+      {isExtracting && (
+        <div className="mx-2 mt-1 mb-1 px-3 py-2 rounded-xl bg-accent dark:bg-[#222222] text-sm">
+          <div className="flex items-center gap-2 mb-1.5">
+            <LoaderIcon className="h-3.5 w-3.5 text-blue-500 shrink-0"/>
+            <span className="text-foreground dark:text-white text-xs">
+              {extractProgress
+                ? `Reading page ${extractProgress.page} of ${extractProgress.total}…`
+                : "Uploading…"}
+            </span>
+            {extractProgress && (
+              <span className="ml-auto text-xs text-muted-foreground dark:text-gray-400">
+                {Math.round((extractProgress.page / extractProgress.total) * 100)}%
+              </span>
+            )}
+          </div>
+          {extractProgress && (
+            <div className="h-1 rounded-full bg-border dark:bg-[#333] overflow-hidden">
+              <div
+                className="h-full rounded-full bg-blue-500 transition-all duration-200"
+                style={{ width: `${(extractProgress.page / extractProgress.total) * 100}%` }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Uploaded doc chip */}
-      {uploadedDoc && (
+      {uploadedDoc && !isExtracting && (
         <div className="flex items-center gap-2 mx-2 mt-1 mb-1 px-3 py-1.5 rounded-xl bg-accent dark:bg-[#222222] text-sm max-w-full">
           <FileIcon className="h-4 w-4 shrink-0 text-blue-500" />
           <span className="truncate text-foreground dark:text-white flex-1">{uploadedDoc.name}</span>

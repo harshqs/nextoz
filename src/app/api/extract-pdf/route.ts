@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Points to the Python FastAPI service
-// Locally: http://localhost:8000
-// On Render (production): set PDF_SERVICE_URL env var in Vercel dashboard
 const PDF_SERVICE_URL = process.env.PDF_SERVICE_URL ?? "http://localhost:8000";
 
 export async function POST(req: NextRequest) {
@@ -14,8 +11,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-    const isTxt = file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt");
+    const name = file.name.toLowerCase();
+    const isPdf = file.type === "application/pdf" || name.endsWith(".pdf");
+    const isTxt = file.type === "text/plain" || name.endsWith(".txt");
 
     if (!isPdf && !isTxt) {
       return NextResponse.json(
@@ -24,29 +22,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Forward the file to the Python service
     const forwardForm = new FormData();
     forwardForm.append("file", file);
 
-    const pyRes = await fetch(`${PDF_SERVICE_URL}/extract`, {
+    // Use the streaming endpoint — proxy the SSE stream directly to the browser
+    const pyRes = await fetch(`${PDF_SERVICE_URL}/extract-stream`, {
       method: "POST",
       body: forwardForm,
     });
 
-    const data = await pyRes.json();
-
-    if (!pyRes.ok) {
+    if (!pyRes.ok || !pyRes.body) {
+      const errData = await pyRes.json().catch(() => ({ detail: "PDF service error" }));
       return NextResponse.json(
-        { error: data.detail ?? "PDF service error" },
+        { error: errData.detail ?? "PDF service error" },
         { status: pyRes.status }
       );
     }
 
-    return NextResponse.json({ text: data.text, name: data.name });
+    // Proxy the SSE stream through to the client
+    return new NextResponse(pyRes.body, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",
+      },
+    });
   } catch (err) {
     console.error("extract-pdf route error:", err);
     return NextResponse.json(
-      { error: "Could not reach the PDF service. Is it running?" },
+      { error: "Could not reach the PDF service. Is it running on port 8000?" },
       { status: 502 }
     );
   }
