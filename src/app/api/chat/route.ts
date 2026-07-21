@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama3.2",   // change to any model you have pulled e.g. mistral, llama3, phi3
+        model: "qwen3.6",   // fast, smart, great for legal + study docs
         stream: false,
         messages: [
           { role: "system", content: systemPrompt },

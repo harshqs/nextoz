@@ -69,7 +69,7 @@ export function PromptBoxDemo() {
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-background dark:bg-[#212121] transition-colors duration-300">
+    <div className="min-h-screen w-full flex flex-col bg-background transition-colors duration-300">
 
       {/* Theme toggle — top right */}
       <div className="fixed top-4 right-4 z-50">
@@ -81,9 +81,10 @@ export function PromptBoxDemo() {
         <div className="flex flex-1 flex-col items-center justify-center px-4 gap-8 min-h-screen">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground dark:text-white tracking-tight">
             Welcome to{" "}
-            <span className="inline-block cursor-default select-none
-              text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-violet-500 to-blue-500
-              transition-all duration-300
+            <span className="inline-block cursor-default select-none transition-all duration-300
+              text-foreground dark:text-white
+              hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r
+              hover:from-blue-500 hover:via-violet-500 hover:to-blue-500
               hover:scale-105 hover:drop-shadow-[0_0_24px_rgba(139,92,246,0.6)]">
               NextOz
             </span>
@@ -149,7 +150,7 @@ export function PromptBoxDemo() {
           </div>
 
           {/* Sticky bottom input */}
-          <div className="sticky bottom-0 w-full bg-gradient-to-t from-background dark:from-[#212121] via-background/90 dark:via-[#212121]/90 to-transparent pt-8 pb-4 px-4">
+          <div className="sticky bottom-0 w-full bg-gradient-to-t from-background via-background/90 to-transparent pt-8 pb-4 px-4">
             {lastMode && (
               <div className="max-w-2xl mx-auto mb-2">
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${modeInfo[lastMode].bg} ${modeInfo[lastMode].color}`}>

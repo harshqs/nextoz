@@ -47,7 +47,7 @@ const PopoverContent = React.forwardRef<
       align={align}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 w-64 rounded-xl bg-popover dark:bg-[#303030] p-2 text-popover-foreground dark:text-white shadow-md outline-none animate-in data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
+        "z-50 w-64 rounded-xl bg-popover dark:bg-[#1a1a1a] p-2 text-popover-foreground dark:text-white shadow-md outline-none animate-in data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
         className
       )}
       {...props}
@@ -207,12 +207,12 @@ export const PromptBox = React.forwardRef<
   const hasValue = value.trim().length > 0;
 
   return (
-    <div className={cn("flex flex-col rounded-[28px] p-2 shadow-sm transition-colors bg-white border dark:bg-[#303030] dark:border-transparent", className)}>
+    <div className={cn("flex flex-col rounded-[28px] p-2 shadow-sm transition-colors bg-white border dark:bg-[#1a1a1a] dark:border-[#2a2a2a]", className)}>
       <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.txt,application/pdf,text/plain" />
 
       {/* Uploaded doc chip */}
       {uploadedDoc && (
-        <div className="flex items-center gap-2 mx-2 mt-1 mb-1 px-3 py-1.5 rounded-xl bg-accent dark:bg-[#3b4045] text-sm max-w-full">
+        <div className="flex items-center gap-2 mx-2 mt-1 mb-1 px-3 py-1.5 rounded-xl bg-accent dark:bg-[#222222] text-sm max-w-full">
           <FileIcon className="h-4 w-4 shrink-0 text-blue-500" />
           <span className="truncate text-foreground dark:text-white flex-1">{uploadedDoc.name}</span>
           <button onClick={() => { setUploadedDoc(null); setExtractError(null); }} className="shrink-0 text-muted-foreground hover:text-foreground"><XIcon className="h-3.5 w-3.5"/></button>
@@ -244,7 +244,7 @@ export const PromptBox = React.forwardRef<
               <TooltipTrigger asChild>
                 <button type="button" onClick={() => fileInputRef.current?.click()}
                   disabled={isExtracting}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none disabled:opacity-50">
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#2a2a2a] focus-visible:outline-none disabled:opacity-50">
                   {isExtracting ? <LoaderIcon className="h-5 w-5"/> : <PlusIcon className="h-6 w-6"/>}
                   <span className="sr-only">Upload document</span>
                 </button>
@@ -258,7 +258,7 @@ export const PromptBox = React.forwardRef<
                 <TooltipTrigger asChild>
                   <PopoverTrigger asChild>
                     <button type="button"
-                      className="flex h-8 items-center gap-2 rounded-full p-2 text-sm text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none">
+                      className="flex h-8 items-center gap-2 rounded-full p-2 text-sm text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#2a2a2a] focus-visible:outline-none">
                       <Settings2Icon className="h-4 w-4"/>
                       {!selectedTool && "Tools"}
                     </button>
@@ -271,8 +271,8 @@ export const PromptBox = React.forwardRef<
                 <div className="flex flex-col gap-1 mt-1">
                   {toolsList.map(tool => (
                     <button key={tool.id} onClick={() => { setSelectedTool(tool.id); setIsPopoverOpen(false); }}
-                      className={cn("flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-accent dark:hover:bg-[#515151] transition-colors",
-                        selectedTool === tool.id && "bg-accent dark:bg-[#515151]")}>
+                      className={cn("flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-accent dark:hover:bg-[#2a2a2a] transition-colors",
+                        selectedTool === tool.id && "bg-accent dark:bg-[#2a2a2a]")}>
                       <tool.icon className="h-4 w-4 shrink-0"/>
                       <div className="flex flex-col">
                         <span className="font-medium">{tool.name}</span>
@@ -289,7 +289,7 @@ export const PromptBox = React.forwardRef<
               <>
                 <div className="h-4 w-px bg-border dark:bg-gray-600"/>
                 <button onClick={() => setSelectedTool(null)}
-                  className="flex h-8 items-center gap-2 rounded-full px-2 text-sm hover:bg-accent dark:hover:bg-[#3b4045] cursor-pointer dark:text-[#99ceff] text-[#2294ff] transition-colors">
+                  className="flex h-8 items-center gap-2 rounded-full px-2 text-sm hover:bg-accent dark:hover:bg-[#222222] cursor-pointer dark:text-[#99ceff] text-[#2294ff] transition-colors">
                   {ActiveToolIcon && <ActiveToolIcon className="h-4 w-4"/>}
                   {activeTool.shortName}
                   <XIcon className="h-4 w-4"/>
@@ -302,7 +302,7 @@ export const PromptBox = React.forwardRef<
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button type="button"
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none">
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#2a2a2a] focus-visible:outline-none">
                     <MicIcon className="h-5 w-5"/><span className="sr-only">Record voice</span>
                   </button>
                 </TooltipTrigger>
@@ -312,7 +312,7 @@ export const PromptBox = React.forwardRef<
                 <TooltipTrigger asChild>
                   <button type="button" onClick={handleSubmit}
                     disabled={!hasValue || isLoading}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none bg-black text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80 disabled:bg-black/40 dark:disabled:bg-[#515151]">
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none bg-black text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80 disabled:bg-black/40 dark:disabled:bg-[#2a2a2a]">
                     {isLoading ? <LoaderIcon className="h-5 w-5"/> : <SendIcon className="h-6 w-6"/>}
                     <span className="sr-only">Send</span>
                   </button>
