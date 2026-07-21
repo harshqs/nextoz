@@ -77,7 +77,12 @@ export function useChatHistory() {
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [loaded, setLoaded] = React.useState(false);
 
-  // Load all sessions from IndexedDB on mount
+  // Keep a ref in sync with activeId so callbacks always see the latest value
+  const activeIdRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
+
   React.useEffect(() => {
     getAllSessions()
       .then((s) => { setSessions(s); setLoaded(true); })
@@ -88,74 +93,78 @@ export function useChatHistory() {
 
   const newChat = React.useCallback(() => {
     setActiveId(null);
+    activeIdRef.current = null;
   }, []);
 
   const loadSession = React.useCallback((id: string) => {
     setActiveId(id);
+    activeIdRef.current = id;
   }, []);
 
-  const addMessage = React.useCallback(
-    async (msg: ChatMessage) => {
-      const now = Date.now();
-      setSessions((prev) => {
-        let updated: ChatSession[];
-        if (!activeId) {
-          // Create new session
-          const newSession: ChatSession = {
-            id: generateId(),
-            title: msg.role === "user" ? generateTitle(msg.content) : "New Chat",
-            messages: [msg],
-            createdAt: now,
-            updatedAt: now,
-          };
-          setActiveId(newSession.id);
-          updated = [newSession, ...prev];
-          saveSession(newSession).catch(console.error);
-        } else {
-          updated = prev.map((s) => {
-            if (s.id !== activeId) return s;
-            const newMsgs = [...s.messages, msg];
-            const updatedSession = { ...s, messages: newMsgs, updatedAt: now };
-            saveSession(updatedSession).catch(console.error);
-            return updatedSession;
-          });
-          // Re-sort by updatedAt
-          updated = [...updated].sort((a, b) => b.updatedAt - a.updatedAt);
-        }
-        return updated;
-      });
-    },
-    [activeId]
-  );
+  /**
+   * Add a user message — creates a new session if none is active,
+   * returns the session ID so the caller can pin subsequent messages to it.
+   */
+  const addUserMessage = React.useCallback((msg: ChatMessage): string => {
+    const now = Date.now();
+    const currentId = activeIdRef.current;
 
-  const updateLastAssistantMessage = React.useCallback(
-    async (content: string) => {
-      if (!activeId) return;
-      setSessions((prev) => {
-        const updated = prev.map((s) => {
-          if (s.id !== activeId) return s;
-          const msgs = [...s.messages];
-          // Update last assistant message in place
-          for (let i = msgs.length - 1; i >= 0; i--) {
-            if (msgs[i].role === "assistant") {
-              msgs[i] = { ...msgs[i], content };
-              break;
-            }
-          }
-          const updatedSession = { ...s, messages: msgs, updatedAt: Date.now() };
-          saveSession(updatedSession).catch(console.error);
-          return updatedSession;
-        });
-        return updated;
+    if (!currentId) {
+      // Start a brand-new session
+      const newId = generateId();
+      const newSession: ChatSession = {
+        id: newId,
+        title: generateTitle(msg.content),
+        messages: [msg],
+        createdAt: now,
+        updatedAt: now,
+      };
+      // Update ref immediately — before any re-render
+      activeIdRef.current = newId;
+      setActiveId(newId);
+      setSessions((prev) => [newSession, ...prev]);
+      saveSession(newSession).catch(console.error);
+      return newId;
+    }
+
+    // Append to existing session
+    setSessions((prev) => {
+      const updated = prev.map((s) => {
+        if (s.id !== currentId) return s;
+        const updatedSession = { ...s, messages: [...s.messages, msg], updatedAt: now };
+        saveSession(updatedSession).catch(console.error);
+        return updatedSession;
       });
-    },
-    [activeId]
-  );
+      return [...updated].sort((a, b) => b.updatedAt - a.updatedAt);
+    });
+    return currentId;
+  }, []); // no deps — uses ref
+
+  /**
+   * Add the assistant reply to a specific session by ID.
+   * This avoids any stale-closure issue entirely.
+   */
+  const addAssistantMessage = React.useCallback((sessionId: string, msg: ChatMessage) => {
+    const now = Date.now();
+    setSessions((prev) => {
+      const updated = prev.map((s) => {
+        if (s.id !== sessionId) return s;
+        const updatedSession = { ...s, messages: [...s.messages, msg], updatedAt: now };
+        saveSession(updatedSession).catch(console.error);
+        return updatedSession;
+      });
+      return [...updated].sort((a, b) => b.updatedAt - a.updatedAt);
+    });
+  }, []);
 
   const removeSession = React.useCallback(async (id: string) => {
     await deleteSession(id);
     setSessions((prev) => prev.filter((s) => s.id !== id));
-    setActiveId((cur) => (cur === id ? null : cur));
+    setActiveId((cur) => {
+      const next = cur === id ? null : cur;
+      activeIdRef.current = next;
+      return next;
+    });
   }, []);
 
   return {
@@ -165,8 +174,8 @@ export function useChatHistory() {
     loaded,
     newChat,
     loadSession,
-    addMessage,
-    updateLastAssistantMessage,
+    addUserMessage,
+    addAssistantMessage,
     removeSession,
   };
 }

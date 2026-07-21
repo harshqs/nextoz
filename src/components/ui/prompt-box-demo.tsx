@@ -16,7 +16,7 @@ const modeInfo: Record<ToolId, { label: string; color: string; bg: string }> = {
 export function PromptBoxDemo() {
   const {
     sessions, activeSession, activeId,
-    newChat, loadSession, addMessage, updateLastAssistantMessage, removeSession,
+    newChat, loadSession, addUserMessage, addAssistantMessage, removeSession,
   } = useChatHistory();
 
   const [streamingContent, setStreamingContent] = React.useState<string | null>(null);
@@ -38,7 +38,9 @@ export function PromptBoxDemo() {
     setLastMode(tool);
 
     const userMsg: ChatMessage = { role: "user", content: question, timestamp: Date.now() };
-    await addMessage(userMsg);
+    // addUserMessage returns the session ID (new or existing) synchronously via ref
+    const sessionId = addUserMessage(userMsg);
+
     setIsLoading(true);
     setStreamingContent("");
 
@@ -54,7 +56,6 @@ export function PromptBoxDemo() {
         throw new Error(err.error ?? "Request failed");
       }
 
-      // Stream tokens
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -85,13 +86,13 @@ export function PromptBoxDemo() {
         }
       }
 
-      // Save final message to history
+      // Save assistant message to the exact session we created/used above
       const assistantMsg: ChatMessage = {
         role: "assistant",
         content: accumulated,
         timestamp: Date.now(),
       };
-      await addMessage(assistantMsg);
+      addAssistantMessage(sessionId, assistantMsg);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
